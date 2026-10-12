@@ -161,7 +161,12 @@ def build_exceptions(result: dict[str, pd.DataFrame], std_mult: float, timelines
             ),
         ),
     ]
-    exceptions = pd.concat([part for part in parts if not part.empty], ignore_index=True)
+    kept = [part for part in parts if not part.empty]
+    if not kept:
+        return pd.DataFrame(
+            columns=["distributor_id", "week", "check_name", "issue_description", "row_count", "severity"]
+        )
+    exceptions = pd.concat(kept, ignore_index=True)
     exceptions["severity_rank"] = exceptions["severity"].map(SEVERITY_ORDER)
     exceptions = exceptions.sort_values(
         ["severity_rank", "distributor_id", "week", "check_name"]
