@@ -402,20 +402,18 @@ def main() -> None:
         .agg(events=("week", "size"), rows_affected=("rows_affected", "sum"))
         .sort_values("defect_type")
     )
-    print("")
-    print("Distributor feed summary")
+    logger.info("Distributor feed summary")
     volumes = mapping.groupby("distributor_id")["volume_liters"].sum().sort_index()
     for distributor_id, volume in volumes.items():
-        print(f"{distributor_id}: {volume:,.0f} liters, {feed_counts[distributor_id]:,} feed rows")
-    print("")
-    print("Defect summary")
-    print(f"{'defect_type':<22} {'events':>8} {'rows_affected':>14}")
+        logger.info("%s: %s liters, %s feed rows", distributor_id, f"{volume:,.0f}", f"{feed_counts[distributor_id]:,}")
+    logger.info("Defect summary")
+    logger.info("%-22s %8s %14s", "defect_type", "events", "rows_affected")
     for row in summary.itertuples(index=False):
-        print(f"{row.defect_type:<22} {int(row.events):>8,} {int(row.rows_affected):>14,}")
-    print(f"Late files: {int(manifest_frame['is_late'].sum())}")
-    print(f"Manifest: {manifest_path}")
-    print(f"Defect log: {defect_path}")
-    print(f"SKU crosswalk: {crosswalk_path}")
+        logger.info("%-22s %8s %14s", row.defect_type, f"{int(row.events):,}", f"{int(row.rows_affected):,}")
+    logger.info("Late files: %s", f"{int(manifest_frame['is_late'].sum()):,}")
+    logger.info("Manifest: %s", manifest_path)
+    logger.info("Defect log: %s", defect_path)
+    logger.info("SKU crosswalk: %s", crosswalk_path)
 
 
 if __name__ == "__main__":

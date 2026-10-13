@@ -537,13 +537,12 @@ def main() -> None:
     report, findings = build_report(cfg, result)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report, encoding="utf-8")
-    print("")
-    print("Data profile summary")
-    print(f"Report: {report_path}")
-    print(f"Rows profiled: {num(one(result, 'overview')['row_count'])}")
-    print("Key findings:")
+    logger.info("Data profile summary")
+    logger.info("Report: %s", report_path)
+    logger.info("Rows profiled: %s", num(one(result, "overview")["row_count"]))
+    logger.info("Key findings:")
     for index, finding in enumerate(findings, start=1):
-        print(f"{index}. {finding}")
+        logger.info("%s. %s", index, finding)
 
 
 if __name__ == "__main__":

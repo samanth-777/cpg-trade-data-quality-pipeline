@@ -40,15 +40,20 @@ def resolve(path_value: str) -> Path:
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Configure a stream logger once and return it."""
+    """Configure a stream logger from config.yaml and return it."""
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-    if not logger.handlers:
-        handler = logging.StreamHandler()
-        handler.setFormatter(
-            logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
-        )
-        logger.addHandler(handler)
+    if logger.handlers:
+        return logger
+    level_name = "INFO"
+    log_format = "%(asctime)s %(levelname)s %(name)s %(message)s"
+    if CONFIG_PATH.exists():
+        block = load_config().get("logging") or {}
+        level_name = str(block.get("level", level_name))
+        log_format = str(block.get("format", log_format))
+    logger.setLevel(getattr(logging, level_name.upper(), logging.INFO))
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(log_format))
+    logger.addHandler(handler)
     logger.propagate = False
     return logger
 

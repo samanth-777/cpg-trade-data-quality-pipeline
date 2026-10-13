@@ -309,25 +309,28 @@ def main() -> None:
     line_count = int(summary["line_count"])
     flagged_before = int(summary["flagged_before"])
     flagged_after = int(summary["flagged_after"])
-    print("")
-    print("Reconciliation summary")
-    print(f"Lines compared: {exported:,}")
-    print(f"Absolute variance before cleaning: {float(summary['abs_before']) / internal:.2%}")
-    print(f"Absolute variance after cleaning: {float(summary['abs_after']) / internal:.2%}")
-    print(f"Flagged lines before cleaning: {flagged_before:,} ({percent(flagged_before, line_count)})")
-    print(f"Flagged lines after cleaning: {flagged_after:,} ({percent(flagged_after, line_count)})")
-    print(f"Signed variance before cleaning: {(before - internal) / internal:.2%}")
-    print(f"Signed variance after cleaning: {(after - internal) / internal:.2%}")
+    logger.info("Reconciliation summary")
+    logger.info("Lines compared: %s", f"{exported:,}")
+    logger.info("Absolute variance before cleaning: %.2f%%", 100 * float(summary["abs_before"]) / internal)
+    logger.info("Absolute variance after cleaning: %.2f%%", 100 * float(summary["abs_after"]) / internal)
+    logger.info("Flagged lines before cleaning: %s (%s)", f"{flagged_before:,}", percent(flagged_before, line_count))
+    logger.info("Flagged lines after cleaning: %s (%s)", f"{flagged_after:,}", percent(flagged_after, line_count))
+    logger.info("Signed variance before cleaning: %.2f%%", 100 * (before - internal) / internal)
+    logger.info("Signed variance after cleaning: %.2f%%", 100 * (after - internal) / internal)
     explained = int(summary["explained_after"])
-    print(f"Flagged lines with an explained root cause: {explained:,} ({percent(explained, flagged_after)})")
-    print(f"Validation-stage detection: {validation_caught} of {validation_injected}")
-    print(f"Reconciliation-stage volume_distortion: {recon_caught} of {recon_injected}")
-    print(f"Overall detection: {overall_caught} of {validation_injected}")
-    print("Root causes after cleaning:")
+    logger.info(
+        "Flagged lines with an explained root cause: %s (%s)",
+        f"{explained:,}",
+        percent(explained, flagged_after),
+    )
+    logger.info("Validation-stage detection: %s of %s", validation_caught, validation_injected)
+    logger.info("Reconciliation-stage volume_distortion: %s of %s", recon_caught, recon_injected)
+    logger.info("Overall detection: %s of %s", overall_caught, validation_injected)
+    logger.info("Root causes after cleaning:")
     for row in causes:
-        print(f"  {row['root_cause']}: {int(row['lines']):,}")
-    print(f"Top discrepancies: {top_count}")
-    print(f"Report: {report_path}")
+        logger.info("  %s: %s", row["root_cause"], f"{int(row['lines']):,}")
+    logger.info("Top discrepancies: %s", top_count)
+    logger.info("Report: %s", report_path)
 
 
 if __name__ == "__main__":

@@ -229,13 +229,12 @@ def main() -> None:
     finally:
         conn.close()
 
-    print("")
-    print("Ingestion summary")
+    logger.info("Ingestion summary")
     display = log_frame.copy()
     for column in ("rows_read", "rows_loaded", "rows_rejected"):
         display[column] = display[column].map(lambda value: f"{int(value):,}")
-    print(display.to_string(index=False))
-    print(
+    logger.info("\n%s", display.to_string(index=False))
+    logger.info(
         f"Total read {log_frame['rows_read'].sum():,}, "
         f"loaded {log_frame['rows_loaded'].sum():,}, "
         f"rejected {log_frame['rows_rejected'].sum():,}"

@@ -481,15 +481,14 @@ def main() -> None:
     size = path.stat().st_size
     if size > 25 * 1024 * 1024:
         raise RuntimeError(f"Workbook is {size / 1024 / 1024:.1f} MB, over the 25 MB limit")
-    print("")
-    print("Excel workbook")
-    print(f"File: {path}")
-    print(f"Size: {size / 1024 / 1024:.2f} MB")
-    print(f"Weekly_Compare rows: {sample_rows:,}")
-    print(f"Pivot_Ready rows: {weekly_rows:,}")
-    print(f"SKU_Master rows: {sku_rows:,}")
-    print(f"Account_Master rows: {account_rows:,}")
-    print(f"Top discrepancies: {len(data['top']):,}")
+    logger.info("Excel workbook")
+    logger.info("File: %s", path)
+    logger.info("Size: %.2f MB", size / 1024 / 1024)
+    logger.info("Weekly_Compare rows: %s", f"{sample_rows:,}")
+    logger.info("Pivot_Ready rows: %s", f"{weekly_rows:,}")
+    logger.info("SKU_Master rows: %s", f"{sku_rows:,}")
+    logger.info("Account_Master rows: %s", f"{account_rows:,}")
+    logger.info("Top discrepancies: %s", f"{len(data['top']):,}")
 
 
 if __name__ == "__main__":

@@ -187,12 +187,11 @@ def main() -> None:
     finally:
         conn.close()
 
-    print("")
-    print("Reference table summary")
-    print(f"SKUs where the description was chosen from multiple values: {multi_desc:,}")
-    print(f"Accounts where the name was chosen from multiple spellings: {multi_name:,}")
+    logger.info("Reference table summary")
+    logger.info("SKUs where the description was chosen from multiple values: %s", f"{multi_desc:,}")
+    logger.info("Accounts where the name was chosen from multiple spellings: %s", f"{multi_name:,}")
     for table, (count, size) in exports.items():
-        print(f"{table}: {count:,} rows, {size / (1024 * 1024):.2f} MB")
+        logger.info("%s: %s rows, %.2f MB", table, f"{count:,}", size / (1024 * 1024))
 
 
 if __name__ == "__main__":

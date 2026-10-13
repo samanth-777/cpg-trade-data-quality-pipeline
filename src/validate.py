@@ -351,14 +351,17 @@ def main() -> None:
     shutil.copyfile(exceptions_path, sample_dir / "exceptions.csv")
     shutil.copyfile(scorecard_path, sample_dir / "dq_scorecard.csv")
 
-    print("")
-    print("Validation summary")
-    print(f"Exceptions: {len(exceptions):,}")
-    print(scorecard[["distributor_id", "completeness", "uniqueness", "validity", "timeliness", "overall"]].to_string(index=False))
-    print("")
-    print("Validation-stage detection")
-    print(detection.to_string(index=False))
-    print(f"Report: {report_path}")
+    logger.info("Validation summary")
+    logger.info("Exceptions: %s", f"{len(exceptions):,}")
+    logger.info(
+        "\n%s",
+        scorecard[["distributor_id", "completeness", "uniqueness", "validity", "timeliness", "overall"]].to_string(
+            index=False
+        ),
+    )
+    logger.info("Validation-stage detection")
+    logger.info("\n%s", detection.to_string(index=False))
+    logger.info("Report: %s", report_path)
 
 
 if __name__ == "__main__":
