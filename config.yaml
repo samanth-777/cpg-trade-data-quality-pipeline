@@ -34,6 +34,7 @@ paths:
   reconciliation_csv: data/output/reconciliation.csv
   top_discrepancies_csv: data/output/top_discrepancies.csv
   reconciliation_report: docs/reconciliation_results.md
+  excel_workbook: excel/variance_workbook.xlsx
 api:
   socrata_url: https://data.iowa.gov/resource/m3tr-qhgy.json
   page_size: 50000
