@@ -106,24 +106,32 @@ pull:
   socrata_http_status: 404
   row_count: 5230532
   file_bytes: 937688453
-  elapsed_seconds: 32.7
+  elapsed_seconds: 1.9
   datasets_loaded:
   - 2023
   - 2024
-
 simulation:
   duplicate_rate: 0.02
-  duplicate_distributors: [D01, D03, D06]
-  missing_week_distributors: [D02, D05]
+  duplicate_distributors:
+  - D01
+  - D03
+  - D06
+  missing_week_distributors:
+  - D02
+  - D05
   missing_week_min: 3
   missing_week_max: 5
   unmapped_rate: 0.03
-  unmapped_distributors: [D07, D08]
+  unmapped_distributors:
+  - D07
+  - D08
   negative_rate: 0.003
-  negative_distributors: [D04]
+  negative_distributors:
+  - D04
   mixed_date_rate: 0.04
-  mixed_date_distributors: [D03]
-  mixed_date_format: "%Y-%m-%d"
+  mixed_date_distributors:
+  - D03
+  mixed_date_format: '%Y-%m-%d'
   volume_shift_events: 4
   volume_shift_min: 0.08
   volume_shift_max: 0.15
@@ -132,13 +140,12 @@ simulation:
   late_lag_days: 21
   case_liters: 9
   xlsx_max_rows: 1000000
-
 feeds:
   D01:
-    file_glob: "D01_weekly.csv"
+    file_glob: D01_weekly.csv
     kind: csv
-    delimiter: ","
-    date_format: "%Y-%m-%d"
+    delimiter: ','
+    date_format: '%Y-%m-%d'
     liters_per_reported_unit: 1
     strip_strings: false
     use_crosswalk: false
@@ -151,10 +158,10 @@ feeds:
       bottles: bottle_qty
       dollars: sales_amt
   D02:
-    file_glob: "D02_weekly.csv"
+    file_glob: D02_weekly.csv
     kind: csv
-    delimiter: ","
-    date_format: "%Y-%m-%d"
+    delimiter: ','
+    date_format: '%Y-%m-%d'
     liters_per_reported_unit: 1
     strip_strings: false
     use_crosswalk: false
@@ -167,10 +174,10 @@ feeds:
       bottles: bottles
       dollars: dollars
   D03:
-    file_glob: "D03_weekly.txt"
+    file_glob: D03_weekly.txt
     kind: csv
-    delimiter: "|"
-    date_format: "%m/%d/%Y"
+    delimiter: '|'
+    date_format: '%m/%d/%Y'
     liters_per_reported_unit: 1
     strip_strings: false
     use_crosswalk: false
@@ -183,10 +190,10 @@ feeds:
       bottles: BOTTLES
       dollars: DOLLARS
   D04:
-    file_glob: "D04_weekly.txt"
+    file_glob: D04_weekly.txt
     kind: csv
-    delimiter: "|"
-    date_format: "%m/%d/%Y"
+    delimiter: '|'
+    date_format: '%m/%d/%Y'
     liters_per_reported_unit: 1
     strip_strings: false
     use_crosswalk: false
@@ -199,10 +206,10 @@ feeds:
       bottles: BottleCount
       dollars: DollarSales
   D05:
-    file_glob: "D05_weekly*.xlsx"
+    file_glob: D05_weekly*.xlsx
     kind: xlsx
-    delimiter: ","
-    date_format: "%d-%b-%y"
+    delimiter: ','
+    date_format: '%d-%b-%y'
     liters_per_reported_unit: 9
     strip_strings: false
     use_crosswalk: false
@@ -215,10 +222,10 @@ feeds:
       bottles: Bottles
       dollars: Amount
   D06:
-    file_glob: "D06_weekly*.xlsx"
+    file_glob: D06_weekly*.xlsx
     kind: xlsx
-    delimiter: ","
-    date_format: "%d-%b-%y"
+    delimiter: ','
+    date_format: '%d-%b-%y'
     liters_per_reported_unit: 9
     strip_strings: false
     use_crosswalk: false
@@ -231,10 +238,10 @@ feeds:
       bottles: BTL
       dollars: DOLLARS
   D07:
-    file_glob: "D07_weekly.csv"
+    file_glob: D07_weekly.csv
     kind: csv
-    delimiter: ","
-    date_format: "%Y-%m-%d"
+    delimiter: ','
+    date_format: '%Y-%m-%d'
     liters_per_reported_unit: 1
     strip_strings: true
     use_crosswalk: true
@@ -247,10 +254,10 @@ feeds:
       bottles: bottles
       dollars: dollars
   D08:
-    file_glob: "D08_weekly.csv"
+    file_glob: D08_weekly.csv
     kind: csv
-    delimiter: ","
-    date_format: "%Y-%m-%d"
+    delimiter: ','
+    date_format: '%Y-%m-%d'
     liters_per_reported_unit: 1
     strip_strings: true
     use_crosswalk: true
