@@ -8,6 +8,7 @@ __pycache__/
 data/raw/
 data/feeds/
 data/output/
+data/reference/internal_weekly.csv
 *.db
 *.sqlite
 ~$*.xlsx
