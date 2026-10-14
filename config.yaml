@@ -9,6 +9,7 @@ date_range:
 thresholds:
   variance_pct: 0.05
   outlier_std: 4
+  price_tolerance_dollars: 0.05
 paths:
   database: data/pipeline.db
   raw_dir: data/raw
@@ -20,6 +21,8 @@ paths:
   docs_dir: docs
   excel_dir: excel
   readme: README.md
+  profile_sql: sql/profile.sql
+  profile_report: docs/data_profile.md
 api:
   socrata_url: https://data.iowa.gov/resource/m3tr-qhgy.json
   page_size: 50000
