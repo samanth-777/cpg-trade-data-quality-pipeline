@@ -31,6 +31,9 @@ paths:
   exceptions_csv: data/output/exceptions.csv
   scorecard_csv: data/output/dq_scorecard.csv
   detection_report: docs/detection_results.md
+  reconciliation_csv: data/output/reconciliation.csv
+  top_discrepancies_csv: data/output/top_discrepancies.csv
+  reconciliation_report: docs/reconciliation_results.md
 api:
   socrata_url: https://data.iowa.gov/resource/m3tr-qhgy.json
   page_size: 50000
