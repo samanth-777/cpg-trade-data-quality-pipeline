@@ -8,7 +8,7 @@ Socrata resource m3tr-qhgy returned HTTP 404. Loaded 5,230,532 rows from Iowa Da
 
 ## Business problem
 
-Beverage distributors send weekly sales files that do not match the internal book of record. Sales, trade finance, and the distributors then spend the close arguing about missing weeks, duplicate lines, item codes nobody recognizes, and volumes that moved by a few percent. This project treats public Iowa Liquor Sales as that internal source, builds eight simulated distributor feeds with known defects, and measures how much of the damage a quality and reconciliation pipeline can catch before a person opens a spreadsheet.
+Beverage distributors send weekly sales files that do not match the internal book of record. Sales, trade finance, and the distributors then spend the close arguing about missing weeks, duplicate lines, item codes nobody recognizes, and volumes that moved by a few percent. The internal book is the Iowa Data Hub annual export for 2023 and 2024 (datasets 1260 and 1261), not a Socrata API download. This project builds eight simulated distributor feeds with known defects and measures how much of the damage a quality and reconciliation pipeline can catch before a person opens a spreadsheet.
 
 ## Architecture
 
@@ -63,16 +63,19 @@ Optional: set `SOCRATA_APP_TOKEN` if the original Socrata endpoint is reachable 
 | Invoice lines pulled | 5,230,532 |
 | Sales dollars | $893,306,076.14 |
 | Liters | 47,036,977.92 |
-| Injected defect events caught by validation | 745 of 749 (99.47%) |
-| Volume-shift events caught by validation | 0 of 4 |
-| Overall variance before cleaning | -0.63% |
-| Flagged lines before cleaning | 119,714 |
-| Overall variance after cleaning | -1.43% |
-| Flagged lines after cleaning | 96,556 |
+| Validation-stage detection | 745 of 749 (99.47%) |
+| Reconciliation-stage volume shifts | 4 of 4 (100.00%) |
+| Overall detection, either stage | 749 of 749 (100.00%) |
+| Absolute variance before cleaning | 3.60% |
+| Absolute variance after cleaning | 2.82% |
+| Flagged lines before cleaning | 119,714 (9.13%) |
+| Flagged lines after cleaning | 96,556 (7.36%) |
+| Signed variance before cleaning | -0.63% |
+| Signed variance after cleaning | -1.43% |
 | Flagged lines with an explained root cause | 90.64% |
 | Excel workbook | 0.85 MB |
 
-Validation catches every structural defect event (duplicates, missing weeks, unmapped codes, negative volumes, mixed dates, late files). A uniform 8 to 15 percent volume shift does not look invalid on its own. Reconciliation is what exposes it. Cleaning removes duplicate copies that had been hiding part of the shortfall, so the overall variance moves from -0.63% to -1.43% while flagged lines fall from 119,714 to 96,556.
+Validation catches every structural defect event (duplicates, missing weeks, unmapped codes, negative volumes, mixed dates, late files). A uniform 8 to 15 percent volume shift does not look invalid on its own. Reconciliation catches those 4 distributor weeks because the absolute week-level variance is over 5%. Absolute variance falls from 3.60% to 2.82% after cleaning, and flagged lines fall from 119,714 to 96,556. Signed variance moves from -0.63% to -1.43% because missing weeks and unmapped codes are still missing, and the duplicate copies that had been offsetting them are gone.
 
 Detail lives in `docs/data_profile.md`, `docs/detection_results.md`, and `docs/reconciliation_results.md`. Small result copies are in `docs/sample_output/`.
 
@@ -86,7 +89,7 @@ Dashboard images belong in `dashboard/`. This pass does not build a dashboard. D
 - pandas, NumPy, requests, tqdm, PyYAML
 - SQLite
 - xlsxwriter and openpyxl for the variance workbook
-- Public Iowa Data Hub exports (datasets 1260 and 1261), with a Socrata client still in `src/pull_iowa.py` for `m3tr-qhgy`
+- Iowa Data Hub annual exports (datasets 1260 and 1261) as the loaded source. `src/pull_iowa.py` still probes the retired Socrata resource `m3tr-qhgy`, which returns HTTP 404.
 
 ## Limitations
 

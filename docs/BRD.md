@@ -2,7 +2,7 @@
 
 ## Problem
 
-Trade sales close depends on weekly files from distributors matching the internal book. On this book the internal source is public Iowa Liquor Sales: 5,230,532 invoice lines from 2023-01-02 through 2024-12-31, $893,306,076.14 and 47,036,977.92 liters. The files that arrive do not share a schema, a date format, or a unit of measure. Some weeks never arrive. Some item codes are not on the internal list. Some volumes are shifted just enough to stay inside a normal range.
+Trade sales close depends on weekly files from distributors matching the internal book. On this book the internal source is the Iowa Data Hub annual export (datasets 1260 for 2023 and 1261 for 2024), not the Socrata API: 5,230,532 invoice lines from 2023-01-02 through 2024-12-31, $893,306,076.14 and 47,036,977.92 liters. The files that arrive do not share a schema, a date format, or a unit of measure. Some weeks never arrive. Some item codes are not on the internal list. Some volumes are shifted just enough to stay inside a normal range.
 
 Without a shared check, Sales restates volume, Trade Finance cannot support a deduction, and distributors resend files that still do not tie. The pipeline makes the gap measurable: what failed ingestion, what failed a quality check, and what still does not match after cleaning.
 
@@ -44,8 +44,8 @@ Without a shared check, Sales restates volume, Trade Finance cannot support a de
 1. `source_sales` contains 5,230,532 distinct invoice lines, and the SQLite count matches the CSV.
 2. `internal_weekly` dollars, liters, and bottles match the invoice extract: $893,306,076.14, 47,036,977.92 liters, 62,654,117 bottles.
 3. Every injected defect event is written to `defect_log.csv`.
-4. Validation catches structural events. On this run that is 745 of 749 events (99.47%). The four misses are the uniform volume shifts.
-5. Reconciliation reports variance before and after cleaning. On this run: -0.63% and 119,714 flagged lines before, -1.43% and 96,556 flagged lines after. 90.64% of the after-cleaning flags have a named root cause.
+4. Validation catches structural events. On this run that is 745 of 749 events (99.47%). The four validation misses are the uniform volume shifts, and reconciliation-stage detection catches all 4. Overall detection across both stages is 749 of 749 (100.00%).
+5. Reconciliation reports absolute variance and flagged rate before and after cleaning. On this run absolute variance is 3.60% before and 2.82% after. Flagged lines are 119,714 (9.13%) before and 96,556 (7.36%) after. Signed variance, a secondary figure, is -0.63% before and -1.43% after. 90.64% of the after-cleaning flags have a named root cause.
 6. `excel/variance_workbook.xlsx` opens with Summary, Weekly_Compare, Pivot_Ready, Top_Discrepancies, SKU_Master, Account_Master, and README, and is under 25 MB. This file is 0.85 MB.
 7. Each script runs with `python src/<name>.py` and `python run_all.py` runs them in order.
 
@@ -54,7 +54,7 @@ Without a shared check, Sales restates volume, Trade Finance cannot support a de
 | Metric | Target | This run |
 | --- | --- | ---: |
 | Invoice lines loaded vs published hub totals | Match | 5,230,532 |
-| Structural defect events detected | At least 95% | 99.47% (745 of 749) |
+| Structural defect events detected | At least 95% | 100.00% overall (749 of 749). Validation stage alone is 99.47% (745 of 749). |
 | Flagged variances with an explained root cause | At least 80% | 90.64% |
 | Workbook size | Under 25 MB | 0.85 MB |
 | Price tie-out | Within $0.05 where a retail price exists | Not measurable, both price fields are empty |

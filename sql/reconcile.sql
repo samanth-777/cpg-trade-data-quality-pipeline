@@ -200,3 +200,32 @@ SELECT
 FROM base;
 
 CREATE INDEX idx_reconciliation_flagged ON reconciliation (flagged);
+
+-- name: distortion_weeks
+WITH week_totals AS (
+    SELECT
+        distributor_id,
+        week,
+        SUM(internal_volume) AS internal_volume,
+        SUM(feed_volume) AS feed_volume
+    FROM reconciliation
+    GROUP BY distributor_id, week
+)
+SELECT
+    d.distributor AS distributor_id,
+    d.week AS week,
+    ROUND(COALESCE(w.internal_volume, 0), 4) AS internal_volume,
+    ROUND(COALESCE(w.feed_volume, 0), 4) AS feed_volume,
+    CASE
+        WHEN ABS(COALESCE(w.internal_volume, 0)) < 0.0001
+         AND ABS(COALESCE(w.feed_volume, 0) - COALESCE(w.internal_volume, 0)) >= 0.01 THEN 1
+        WHEN ABS(COALESCE(w.internal_volume, 0)) >= 0.0001
+         AND ABS((w.feed_volume - w.internal_volume) / w.internal_volume) > __THRESHOLD__ THEN 1
+        ELSE 0
+    END AS caught
+FROM defect_log AS d
+LEFT JOIN week_totals AS w
+    ON w.distributor_id = d.distributor
+   AND w.week = d.week
+WHERE d.defect_type = 'volume_distortion'
+ORDER BY d.distributor, d.week;

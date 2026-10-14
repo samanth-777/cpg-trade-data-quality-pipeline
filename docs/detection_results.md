@@ -1,6 +1,10 @@
 # Detection results
 
-Injected events are rows in `defect_log.csv`. An event is caught when validation writes an exception for the same distributor and week.
+Injected events are rows in `defect_log.csv`. Validation and reconciliation are scored separately, then combined.
+
+## Validation-stage detection
+
+An event is caught at this stage when validation writes an exception for the same distributor and week.
 
 | Defect type | Injected | Caught | Detection rate |
 | --- | ---: | ---: | ---: |
@@ -12,9 +16,21 @@ Injected events are rows in `defect_log.csv`. An event is caught when validation
 | unmapped_sku | 210 | 210 | 100.00% |
 | volume_distortion | 4 | 0 | 0.00% |
 
-Overall, validation caught 745 of 749 injected events (99.47%).
+Validation stage caught 745 of 749 injected events (99.47%).
 
-Volume distortion is the miss. A uniform 8 to 15 percent move still looks like a normal number, so it does not trip duplicates, mapping, sign, parse, or lateness checks. The reconciliation step measures that shift against the internal book.
+Volume distortion is not caught here. A uniform 8 to 15 percent move still looks like a normal number, so it does not trip duplicates, mapping, sign, parse, or lateness checks.
+
+## Reconciliation-stage detection
+
+Volume distortion is compared after cleaning at distributor and week. Feed liters and internal liters are summed for that distributor week. The event is caught when the absolute variance percent is over 5%.
+
+| Defect type | Injected | Caught | Detection rate |
+| --- | ---: | ---: | ---: |
+| volume_distortion | 4 | 4 | 100.00% |
+
+## Overall detection
+
+An event counts as caught when either stage catches it. Overall, 749 of 749 injected events (100.00%) were caught.
 
 ## Scorecard
 

@@ -2,6 +2,8 @@
 
 SQLite database: `data/pipeline.db`. CSV copies of the reference tables live in `data/reference/`. Pipeline outputs live in `data/output/` and are gitignored. Types below are the SQLite types. Blank type means the column was created by a query without an explicit type. Those values are numeric.
 
+`source_sales` is loaded from the Iowa Data Hub annual exports, dataset 1260 for 2023 and dataset 1261 for 2024. It is not loaded from the Socrata API. The pull script probes `m3tr-qhgy` and uses the Hub files when that resource returns HTTP 404.
+
 ## source_sales
 
 Invoice lines from the Iowa Data Hub annual exports, one row per `invoice_line_no`. 5,230,532 rows. CSV: `data/raw/iowa_sales.csv`.

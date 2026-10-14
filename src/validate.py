@@ -246,7 +246,11 @@ def write_detection_report(path: Path, detection: pd.DataFrame, scorecard: pd.Da
     lines = [
         "# Detection results",
         "",
-        "Injected events are rows in `defect_log.csv`. An event is caught when validation writes an exception for the same distributor and week.",
+        "Injected events are rows in `defect_log.csv`. Validation and reconciliation are scored separately, then combined.",
+        "",
+        "## Validation-stage detection",
+        "",
+        "An event is caught at this stage when validation writes an exception for the same distributor and week.",
         "",
         "| Defect type | Injected | Caught | Detection rate |",
         "| --- | ---: | ---: | ---: |",
@@ -262,11 +266,19 @@ def write_detection_report(path: Path, detection: pd.DataFrame, scorecard: pd.Da
         [
             "",
             (
-                f"Overall, validation caught {total_caught} of {total_injected} injected events "
+                f"Validation stage caught {total_caught} of {total_injected} injected events "
                 f"({overall:.2f}%)."
             ),
             "",
-            "Volume distortion is the miss. A uniform 8 to 15 percent move still looks like a normal number, so it does not trip duplicates, mapping, sign, parse, or lateness checks. The reconciliation step measures that shift against the internal book.",
+            "Volume distortion is not caught here. A uniform 8 to 15 percent move still looks like a normal number, so it does not trip duplicates, mapping, sign, parse, or lateness checks.",
+            "",
+            "## Reconciliation-stage detection",
+            "",
+            "Written by src/reconcile.py after the feed is compared with the internal book.",
+            "",
+            "## Overall detection",
+            "",
+            "Written by src/reconcile.py across both stages.",
             "",
             "## Scorecard",
             "",
@@ -339,7 +351,7 @@ def main() -> None:
     print(f"Exceptions: {len(exceptions):,}")
     print(scorecard[["distributor_id", "completeness", "uniqueness", "validity", "timeliness", "overall"]].to_string(index=False))
     print("")
-    print("Detection")
+    print("Validation-stage detection")
     print(detection.to_string(index=False))
     print(f"Report: {report_path}")
 

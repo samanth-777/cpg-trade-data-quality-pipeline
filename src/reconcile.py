@@ -8,6 +8,7 @@ compares variance before that cleaning with variance after it.
 from __future__ import annotations
 
 import csv
+import re
 import shutil
 import sqlite3
 import sys
@@ -73,16 +74,18 @@ def percent(numerator: float, denominator: float) -> str:
 
 
 def write_report(path: Path, summary: sqlite3.Row, causes: list[sqlite3.Row], threshold: float) -> None:
-    """Write the before and after variance narrative."""
+    """Write absolute variance, flagged rate, and the signed variance note."""
     internal = float(summary["internal_volume"])
     before = float(summary["feed_before"])
     after = float(summary["feed_after"])
-    before_pct = (before - internal) / internal
-    after_pct = (after - internal) / internal
+    signed_before = (before - internal) / internal
+    signed_after = (after - internal) / internal
+    abs_before = float(summary["abs_before"]) / internal
+    abs_after = float(summary["abs_after"]) / internal
+    line_count = int(summary["line_count"])
     flagged_before = int(summary["flagged_before"])
     flagged_after = int(summary["flagged_after"])
     explained = int(summary["explained_after"])
-    explained_before = int(summary["explained_before"])
     lines = [
         "# Reconciliation results",
         "",
@@ -95,15 +98,32 @@ def write_report(path: Path, summary: sqlite3.Row, causes: list[sqlite3.Row], th
         "",
         "Cleaning keeps one copy of a duplicate key, maps distributor SKU codes back to the internal item, and drops negative volumes.",
         "",
-        "| Stage | Feed liters | Internal liters | Overall variance | Flagged lines | Explained flagged lines |",
-        "| --- | ---: | ---: | ---: | ---: | ---: |",
+        "Total absolute variance percent is the sum of absolute liter gaps divided by internal liters. Flagged rate is flagged lines divided by lines compared.",
+        "",
+        f"Lines compared: {line_count:,}. Internal liters: {internal:,.2f}.",
+        "",
+        "| Stage | Absolute variance | Flagged lines | Flagged rate |",
+        "| --- | ---: | ---: | ---: |",
         (
-            f"| Before cleaning | {before:,.2f} | {internal:,.2f} | {before_pct:.2%} | "
-            f"{flagged_before:,} | {explained_before:,} ({percent(explained_before, flagged_before)}) |"
+            f"| Before cleaning | {abs_before:.2%} | {flagged_before:,} | "
+            f"{percent(flagged_before, line_count)} |"
         ),
         (
-            f"| After cleaning | {after:,.2f} | {internal:,.2f} | {after_pct:.2%} | "
-            f"{flagged_after:,} | {explained:,} ({percent(explained, flagged_after)}) |"
+            f"| After cleaning | {abs_after:.2%} | {flagged_after:,} | "
+            f"{percent(flagged_after, line_count)} |"
+        ),
+        "",
+        (
+            f"Signed net variance, feed liters minus internal liters divided by internal liters, "
+            f"was {signed_before:.2%} before cleaning and {signed_after:.2%} after cleaning."
+        ),
+        "",
+        "## Why signed variance rose",
+        "",
+        (
+            "Missing weeks and unmapped codes are unrecoverable from the feed. "
+            "Duplicate copies had been offsetting those gaps, so removing the copies makes the signed shortfall larger. "
+            "Absolute variance and the flagged line count fall because those extra copies are no longer counted as gaps."
         ),
         "",
         (
@@ -112,17 +132,91 @@ def write_report(path: Path, summary: sqlite3.Row, causes: list[sqlite3.Row], th
             "Unknown remains on uniform volume shifts and on any other gap the tags do not cover."
         ),
         "",
-        "Flagged lines fell after cleaning because duplicate keys were collapsed. Overall variance moved further from zero because those extra copies had been offsetting missing weeks, rejected rows, and downward volume shifts.",
-        "",
         "## Root cause of flagged lines after cleaning",
         "",
-        "| Root cause | Flagged lines |",
-        "| --- | ---: |",
+        "| Root cause | Flagged lines | Share of flagged |",
+        "| --- | ---: | ---: |",
     ]
     for row in causes:
-        lines.append(f"| {row['root_cause']} | {int(row['lines']):,} |")
+        count = int(row["lines"])
+        lines.append(f"| {row['root_cause']} | {count:,} | {percent(count, flagged_after)} |")
     lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def refresh_detection_report(path: Path, distortion_rows: list[sqlite3.Row], threshold: float) -> tuple[int, int, int, int, int]:
+    """Add reconciliation-stage detection and an overall rate across both stages."""
+    text = path.read_text(encoding="utf-8")
+    scorecard_at = text.index("## Scorecard")
+    scorecard = text[scorecard_at:]
+    table_rows = re.findall(
+        r"^\| ([a-z_]+) \| (\d+) \| (\d+) \| ([0-9.]+)% \|$",
+        text[:scorecard_at],
+        flags=re.M,
+    )
+    if not table_rows:
+        raise RuntimeError(f"Validation detection table is missing from {path}")
+    validation_injected = sum(int(injected) for _, injected, _, _ in table_rows)
+    validation_caught = sum(int(caught) for _, _, caught, _ in table_rows)
+    distortion_validation_caught = 0
+    for defect_type, _injected, caught, _rate in table_rows:
+        if defect_type == "volume_distortion":
+            distortion_validation_caught = int(caught)
+    recon_injected = len(distortion_rows)
+    recon_caught = sum(int(row["caught"]) for row in distortion_rows)
+    overall_caught = validation_caught - distortion_validation_caught + recon_caught
+    overall_rate = 100 * overall_caught / validation_injected if validation_injected else 0
+    recon_rate = 100 * recon_caught / recon_injected if recon_injected else 0
+    validation_rate = 100 * validation_caught / validation_injected if validation_injected else 0
+    header = [
+        "# Detection results",
+        "",
+        "Injected events are rows in `defect_log.csv`. Validation and reconciliation are scored separately, then combined.",
+        "",
+        "## Validation-stage detection",
+        "",
+        "An event is caught at this stage when validation writes an exception for the same distributor and week.",
+        "",
+        "| Defect type | Injected | Caught | Detection rate |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for defect_type, injected, caught, rate in table_rows:
+        header.append(f"| {defect_type} | {int(injected)} | {int(caught)} | {float(rate):.2f}% |")
+    header.extend(
+        [
+            "",
+            (
+                f"Validation stage caught {validation_caught} of {validation_injected} injected events "
+                f"({validation_rate:.2f}%)."
+            ),
+            "",
+            "Volume distortion is not caught here. A uniform 8 to 15 percent move still looks like a normal number, so it does not trip duplicates, mapping, sign, parse, or lateness checks.",
+            "",
+            "## Reconciliation-stage detection",
+            "",
+            (
+                "Volume distortion is compared after cleaning at distributor and week. "
+                "Feed liters and internal liters are summed for that distributor week. "
+                f"The event is caught when the absolute variance percent is over {threshold:.0%}."
+            ),
+            "",
+            "| Defect type | Injected | Caught | Detection rate |",
+            "| --- | ---: | ---: | ---: |",
+            f"| volume_distortion | {recon_injected} | {recon_caught} | {recon_rate:.2f}% |",
+            "",
+            "## Overall detection",
+            "",
+            (
+                "An event counts as caught when either stage catches it. "
+                f"Overall, {overall_caught} of {validation_injected} injected events "
+                f"({overall_rate:.2f}%) were caught."
+            ),
+            "",
+            "",
+        ]
+    )
+    path.write_text("\n".join(header) + scorecard, encoding="utf-8")
+    return validation_caught, validation_injected, recon_caught, recon_injected, overall_caught
 
 
 def main() -> None:
@@ -131,8 +225,10 @@ def main() -> None:
     logger = common.get_logger("reconcile")
     threshold = float(cfg["thresholds"]["variance_pct"])
     sql = split_named_sql((common.ROOT / "sql" / "reconcile.sql").read_text(encoding="utf-8"))
-    recon_sql = sql["build_recon"].replace("__THRESHOLD__", f"{threshold:.6f}")
-    if "__THRESHOLD__" in recon_sql:
+    threshold_sql = f"{threshold:.6f}"
+    recon_sql = sql["build_recon"].replace("__THRESHOLD__", threshold_sql)
+    distortion_sql = sql["distortion_weeks"].replace("__THRESHOLD__", threshold_sql)
+    if "__THRESHOLD__" in recon_sql or "__THRESHOLD__" in distortion_sql:
         raise RuntimeError("Variance threshold was not applied to the reconciliation SQL")
     conn = common.connect(common.resolve(cfg["paths"]["database"]))
     try:
@@ -145,9 +241,12 @@ def main() -> None:
         summary = conn.execute(
             """
             SELECT
+                COUNT(*) AS line_count,
                 SUM(internal_volume) AS internal_volume,
                 SUM(feed_volume_before) AS feed_before,
                 SUM(feed_volume) AS feed_after,
+                SUM(ABS(variance_before)) AS abs_before,
+                SUM(ABS(variance)) AS abs_after,
                 SUM(flagged_before) AS flagged_before,
                 SUM(flagged) AS flagged_after,
                 SUM(CASE WHEN flagged = 1 AND root_cause NOT IN ('', 'Unknown') THEN 1 ELSE 0 END) AS explained_after,
@@ -155,6 +254,7 @@ def main() -> None:
             FROM reconciliation
             """
         ).fetchone()
+        distortion_rows = conn.execute(distortion_sql).fetchall()
         causes = conn.execute(
             """
             SELECT CASE WHEN root_cause = '' THEN 'Not flagged' ELSE root_cause END AS root_cause,
@@ -195,6 +295,10 @@ def main() -> None:
 
     report_path = common.resolve(cfg["paths"]["reconciliation_report"])
     write_report(report_path, summary, causes, threshold)
+    detection_path = common.resolve(cfg["paths"]["detection_report"])
+    validation_caught, validation_injected, recon_caught, recon_injected, overall_caught = refresh_detection_report(
+        detection_path, distortion_rows, threshold
+    )
     sample_dir = common.ROOT / "docs" / "sample_output"
     sample_dir.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(top_path, sample_dir / "top_discrepancies.csv")
@@ -202,16 +306,23 @@ def main() -> None:
     internal = float(summary["internal_volume"])
     before = float(summary["feed_before"])
     after = float(summary["feed_after"])
+    line_count = int(summary["line_count"])
+    flagged_before = int(summary["flagged_before"])
+    flagged_after = int(summary["flagged_after"])
     print("")
     print("Reconciliation summary")
     print(f"Lines compared: {exported:,}")
-    print(f"Overall variance before cleaning: {(before - internal) / internal:.2%}")
-    print(f"Flagged lines before cleaning: {int(summary['flagged_before']):,}")
-    print(f"Overall variance after cleaning: {(after - internal) / internal:.2%}")
-    print(f"Flagged lines after cleaning: {int(summary['flagged_after']):,}")
+    print(f"Absolute variance before cleaning: {float(summary['abs_before']) / internal:.2%}")
+    print(f"Absolute variance after cleaning: {float(summary['abs_after']) / internal:.2%}")
+    print(f"Flagged lines before cleaning: {flagged_before:,} ({percent(flagged_before, line_count)})")
+    print(f"Flagged lines after cleaning: {flagged_after:,} ({percent(flagged_after, line_count)})")
+    print(f"Signed variance before cleaning: {(before - internal) / internal:.2%}")
+    print(f"Signed variance after cleaning: {(after - internal) / internal:.2%}")
     explained = int(summary["explained_after"])
-    flagged = int(summary["flagged_after"])
-    print(f"Flagged lines with an explained root cause: {explained:,} ({percent(explained, flagged)})")
+    print(f"Flagged lines with an explained root cause: {explained:,} ({percent(explained, flagged_after)})")
+    print(f"Validation-stage detection: {validation_caught} of {validation_injected}")
+    print(f"Reconciliation-stage volume_distortion: {recon_caught} of {recon_injected}")
+    print(f"Overall detection: {overall_caught} of {validation_injected}")
     print("Root causes after cleaning:")
     for row in causes:
         print(f"  {row['root_cause']}: {int(row['lines']):,}")
