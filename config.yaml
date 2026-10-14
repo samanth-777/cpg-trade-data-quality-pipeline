@@ -28,6 +28,9 @@ paths:
   sku_crosswalk: data/reference/sku_crosswalk.csv
   defect_log: data/reference/defect_log.csv
   file_manifest: data/feeds/file_manifest.csv
+  exceptions_csv: data/output/exceptions.csv
+  scorecard_csv: data/output/dq_scorecard.csv
+  detection_report: docs/detection_results.md
 api:
   socrata_url: https://data.iowa.gov/resource/m3tr-qhgy.json
   page_size: 50000
