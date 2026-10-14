@@ -10,6 +10,7 @@ thresholds:
   variance_pct: 0.05
   outlier_std: 4
   price_tolerance_dollars: 0.05
+  timeliness_days: 10
 paths:
   database: data/pipeline.db
   raw_dir: data/raw
@@ -23,6 +24,10 @@ paths:
   readme: README.md
   profile_sql: sql/profile.sql
   profile_report: docs/data_profile.md
+  distributor_map: data/reference/distributor_map.csv
+  sku_crosswalk: data/reference/sku_crosswalk.csv
+  defect_log: data/reference/defect_log.csv
+  file_manifest: data/feeds/file_manifest.csv
 api:
   socrata_url: https://data.iowa.gov/resource/m3tr-qhgy.json
   page_size: 50000
@@ -98,3 +103,155 @@ pull:
   datasets_loaded:
   - 2023
   - 2024
+
+simulation:
+  duplicate_rate: 0.02
+  duplicate_distributors: [D01, D03, D06]
+  missing_week_distributors: [D02, D05]
+  missing_week_min: 3
+  missing_week_max: 5
+  unmapped_rate: 0.03
+  unmapped_distributors: [D07, D08]
+  negative_rate: 0.003
+  negative_distributors: [D04]
+  mixed_date_rate: 0.04
+  mixed_date_distributors: [D03]
+  mixed_date_format: "%Y-%m-%d"
+  volume_shift_events: 4
+  volume_shift_min: 0.08
+  volume_shift_max: 0.15
+  late_file_count: 2
+  on_time_lag_days: 4
+  late_lag_days: 21
+  case_liters: 9
+  xlsx_max_rows: 1000000
+
+feeds:
+  D01:
+    file_glob: "D01_weekly.csv"
+    kind: csv
+    delimiter: ","
+    date_format: "%Y-%m-%d"
+    liters_per_reported_unit: 1
+    strip_strings: false
+    use_crosswalk: false
+    columns:
+      distributor_id: dist_id
+      week_start: week_ending
+      account_id: acct
+      sku_id: sku
+      volume: liters
+      bottles: bottle_qty
+      dollars: sales_amt
+  D02:
+    file_glob: "D02_weekly.csv"
+    kind: csv
+    delimiter: ","
+    date_format: "%Y-%m-%d"
+    liters_per_reported_unit: 1
+    strip_strings: false
+    use_crosswalk: false
+    columns:
+      distributor_id: distributor
+      week_start: wk_start
+      account_id: account_code
+      sku_id: item_code
+      volume: vol_l
+      bottles: bottles
+      dollars: dollars
+  D03:
+    file_glob: "D03_weekly.txt"
+    kind: csv
+    delimiter: "|"
+    date_format: "%m/%d/%Y"
+    liters_per_reported_unit: 1
+    strip_strings: false
+    use_crosswalk: false
+    columns:
+      distributor_id: DIST
+      week_start: WEEK
+      account_id: STORE
+      sku_id: ITEM
+      volume: LITERS
+      bottles: BOTTLES
+      dollars: DOLLARS
+  D04:
+    file_glob: "D04_weekly.txt"
+    kind: csv
+    delimiter: "|"
+    date_format: "%m/%d/%Y"
+    liters_per_reported_unit: 1
+    strip_strings: false
+    use_crosswalk: false
+    columns:
+      distributor_id: DistributorID
+      week_start: WeekStart
+      account_id: AccountID
+      sku_id: SkuID
+      volume: VolumeLiters
+      bottles: BottleCount
+      dollars: DollarSales
+  D05:
+    file_glob: "D05_weekly*.xlsx"
+    kind: xlsx
+    delimiter: ","
+    date_format: "%d-%b-%y"
+    liters_per_reported_unit: 9
+    strip_strings: false
+    use_crosswalk: false
+    columns:
+      distributor_id: Wholesaler
+      week_start: Week Of
+      account_id: Customer
+      sku_id: Product
+      volume: Cases
+      bottles: Bottles
+      dollars: Amount
+  D06:
+    file_glob: "D06_weekly*.xlsx"
+    kind: xlsx
+    delimiter: ","
+    date_format: "%d-%b-%y"
+    liters_per_reported_unit: 9
+    strip_strings: false
+    use_crosswalk: false
+    columns:
+      distributor_id: D_CODE
+      week_start: PERIOD
+      account_id: ACCT_NO
+      sku_id: SKU_NO
+      volume: CASE_VOL
+      bottles: BTL
+      dollars: DOLLARS
+  D07:
+    file_glob: "D07_weekly.csv"
+    kind: csv
+    delimiter: ","
+    date_format: "%Y-%m-%d"
+    liters_per_reported_unit: 1
+    strip_strings: true
+    use_crosswalk: true
+    columns:
+      distributor_id: distributor_code
+      week_start: week_start
+      account_id: account_id
+      sku_id: dist_sku
+      volume: volume_liters
+      bottles: bottles
+      dollars: dollars
+  D08:
+    file_glob: "D08_weekly.csv"
+    kind: csv
+    delimiter: ","
+    date_format: "%Y-%m-%d"
+    liters_per_reported_unit: 1
+    strip_strings: true
+    use_crosswalk: true
+    columns:
+      distributor_id: dist
+      week_start: wk
+      account_id: cust
+      sku_id: dist_item
+      volume: litres
+      bottles: btls
+      dollars: sales
