@@ -1,0 +1,13 @@
+venv/
+.env
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+.vscode/
+.cursor/
+data/raw/
+data/feeds/
+data/output/
+*.db
+*.sqlite
+~$*.xlsx

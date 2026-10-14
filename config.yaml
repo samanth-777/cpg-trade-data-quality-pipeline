@@ -1,0 +1,97 @@
+random_seed: 42
+date_range:
+  start: '2023-01-01'
+  end: '2024-12-31'
+  actual_start: '2023-01-01'
+  actual_end: '2024-12-31'
+  fallback_applied: false
+  fallback_note: ''
+thresholds:
+  variance_pct: 0.05
+  outlier_std: 4
+paths:
+  database: data/pipeline.db
+  raw_dir: data/raw
+  raw_csv: data/raw/iowa_sales.csv
+  checkpoint: data/raw/pull_checkpoint.json
+  feeds_dir: data/feeds
+  reference_dir: data/reference
+  output_dir: data/output
+  docs_dir: docs
+  excel_dir: excel
+  readme: README.md
+api:
+  socrata_url: https://data.iowa.gov/resource/m3tr-qhgy.json
+  page_size: 50000
+  order: :id
+  token_env: SOCRATA_APP_TOKEN
+  max_runtime_minutes: 45
+  retries: 5
+  hub_base_url: https://idh-be.iowa.gov/api/v1/datasets
+  hub_datasets:
+  - year: 2023
+    dataset_id: 1260
+  - year: 2024
+    dataset_id: 1261
+columns:
+  keep:
+  - invoice_line_no
+  - date
+  - store
+  - name
+  - city
+  - county
+  - category
+  - category_name
+  - vendor_number
+  - vendor_name
+  - itemno
+  - im_desc
+  - pack
+  - bottle_volume_ml
+  - state_bottle_cost
+  - state_bottle_retail
+  - sale_bottles
+  - sale_dollars
+  - sale_liters
+  numeric:
+  - pack
+  - bottle_volume_ml
+  - state_bottle_cost
+  - state_bottle_retail
+  - sale_bottles
+  - sale_dollars
+  - sale_liters
+  integer:
+  - pack
+  - sale_bottles
+  hub_rename:
+    invoice_id: invoice_line_no
+    ordered_on: date
+    store_no: store
+    store_name: name
+    store_city: city
+    county_name: county
+    category_code: category
+    category_name: category_name
+    vendor_number: vendor_number
+    vendor_name: vendor_name
+    item_no: itemno
+    im_desc: im_desc
+    pack: pack
+    bottle_volume_ml: bottle_volume_ml
+    state_bottle_cost: state_bottle_cost
+    state_bottle_retail: state_bottle_retail
+    sales_bottles: sale_bottles
+    sales_dollars: sale_dollars
+    sales_liters: sale_liters
+pull:
+  requested_source: socrata
+  source_used: iowa_data_hub
+  socrata_http_status: 404
+  row_count: 5230532
+  file_bytes: 937688453
+  elapsed_seconds: 32.7
+  datasets_loaded:
+  - 2023
+  - 2024
