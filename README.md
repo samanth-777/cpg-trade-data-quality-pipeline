@@ -39,7 +39,11 @@ From the project root, with the virtual environment active:
 ```bash
 source venv/bin/activate
 python run_all.py
+python run_all.py --dry-run
+python run_all.py --step validate
 ```
+
+`--step` accepts `pull`, `profile`, `reference`, `simulate`, `ingest`, `validate`, `reconcile`, or `excel`. `--dry-run` lists the scripts and does not execute them.
 
 The same steps, one script at a time:
 
@@ -55,6 +59,19 @@ python src/build_excel.py
 ```
 
 Optional: set `SOCRATA_APP_TOKEN` if the original Socrata endpoint is reachable again. The current pull uses the Iowa Data Hub annual exports and resumes from cached zip files.
+
+Launch the quality dashboard from the project root, after `data/pipeline.db` exists:
+
+```bash
+streamlit run dashboard/app.py
+```
+
+Build and run the container. The image includes Python 3.11 and the `sqlite3` client. The default command lists the pipeline steps and does not download data:
+
+```bash
+docker build -t cpg-trade-data-quality .
+docker run --rm cpg-trade-data-quality
+```
 
 ## Key results
 
@@ -81,12 +98,13 @@ Detail lives in `docs/data_profile.md`, `docs/detection_results.md`, and `docs/r
 
 ## Screenshots
 
-Dashboard images belong in `dashboard/`. This pass does not build a dashboard. Drop screenshots in that folder when a review UI exists.
+The live review screen is `dashboard/app.py`. Save screenshots of that app in `dashboard/` when you want them in the portfolio.
 
 ## Tech stack
 
 - Python 3.11
 - pandas, NumPy, requests, tqdm, PyYAML
+- Streamlit and Plotly for the quality dashboard
 - SQLite
 - xlsxwriter and openpyxl for the variance workbook
 - Iowa Data Hub annual exports (datasets 1260 and 1261) as the loaded source. `src/pull_iowa.py` still probes the retired Socrata resource `m3tr-qhgy`, which returns HTTP 404.
